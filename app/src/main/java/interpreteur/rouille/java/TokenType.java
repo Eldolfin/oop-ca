@@ -2,15 +2,18 @@ package interpreteur.rouille.java;
 
 enum TokenType {
   LEFT_PAREN("\\("), RIGHT_PAREN("\\)"), LEFT_BRACE("\\{"), RIGHT_BRACE("}"),
-  COMMA(","), DOT("\\."), MINUS("-"), PLUS("\\+"), SEMICOLON(","), SLASH("/"), STAR("\\*"),
+  COMMA(","), DOT("\\."), MINUS("-"), PLUS("\\+"), SEMICOLON(";"), SLASH("/"), STAR("\\*"),
 
   BANG("!"), BANG_EQUAL("!="),
   EQUAL("="), EQUAL_EQUAL("=="),
   GREATER(">"), GREATER_EQUAL(">="),
   LESS("<"), LESS_EQUAL("<="),
-  AND("&&"), OR("||"),
+  AND("&&"), OR("\\|\\|"),
+  BITWISE_AND("&"), BITWISE_OR("\\|"),
 
-  IDENTIFIER("[a-zA-Z_][a-zA-Z_0-9]*"), STRING("\".*\""),
+  IDENTIFIER("[a-zA-Z_][a-zA-Z_0-9]*"),
+  // STRING("\".*\""),
+  STRING("[\"]([^\"\\\n]|\\.|\\\n)*[\"]"),
   INTEGER("-?\\d+"), FLOAT("-?\\d+\\.\\d+"),
 
   STRUCT("structure"), IF("si"), ELSE("sinon"), FUN("fonction"),

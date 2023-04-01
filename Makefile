@@ -1,14 +1,16 @@
 default: run
 
 build:
+	python app/src/main/python/generate_ast.py
 	gradle build
 
 clean:
 	gradle clean
 
-run:
-	# gradle -q --console plain run # slow af
+jar: build
 	gradle jar
+
+run: jar
 	java -jar app/build/libs/app.jar
 
-.PHONY: build clean run
+.PHONY: build clean run jar

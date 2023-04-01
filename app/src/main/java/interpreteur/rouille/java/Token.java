@@ -2,7 +2,7 @@ package interpreteur.rouille.java;
 
 import java.util.Optional;
 
-public class Token {
+class Token {
   final TokenType type;
   final String lexeme;
   final Optional<Object> literal;

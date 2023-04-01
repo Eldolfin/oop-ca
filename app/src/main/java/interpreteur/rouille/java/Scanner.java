@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 import static interpreteur.rouille.java.TokenType.*;
 
-public class Scanner {
+class Scanner {
   private final String source;
   private final List<Token> tokens = new ArrayList<>();
   private int start = 0;
@@ -44,28 +44,49 @@ public class Scanner {
 
   private void scanToken() {
     var next = source.substring(current);
-    TokenType maxToken = null;
+    TokenType maxTokenType = null;
+    String maxLexeme = null;
     var maxTokenLenght = 0;
     for (var entry : patterns.entrySet()) {
-      var token = entry.getKey();
+      var tokenType = entry.getKey();
       var pattern = entry.getValue();
       var matcher = pattern.matcher(next);
       if (matcher.find()) {
         var length = matcher.end() - matcher.start();
-        if (length > maxTokenLenght || length == maxTokenLenght && maxToken == IDENTIFIER) {
-          maxToken = token;
+        if (length > maxTokenLenght || length == maxTokenLenght && maxTokenType == IDENTIFIER) {
+          maxTokenType = tokenType;
           maxTokenLenght = length;
+          maxLexeme = next.substring(matcher.start(), matcher.end());
         }
       }
     }
-    if (maxToken == null) {
-      App.error(line, "Unknown token.");
-      current++;
+
+    if (maxTokenType == null) {
+      if (advance() != ' ') {
+        App.error(line, "Unknown token.");
+      }
       return;
     }
 
     current += maxTokenLenght;
-    addToken(maxToken);
+    switch (maxTokenType) {
+      case INTEGER:
+        addToken(maxTokenType, Optional.of(Integer.parseInt(maxLexeme)));
+        break;
+      case FLOAT:
+        addToken(maxTokenType, Optional.of(Double.parseDouble(maxLexeme)));
+        break;
+      case STRING:
+        addToken(maxTokenType, Optional.of(maxLexeme.substring(1, maxLexeme.length() - 1)));
+        break;
+      default:
+        addToken(maxTokenType);
+        break;
+    }
+  }
+
+  private char advance() {
+    return source.charAt(current++);
   }
 
   private void addToken(TokenType type) {
@@ -74,6 +95,6 @@ public class Scanner {
 
   private void addToken(TokenType type, Optional<Object> literal) {
     String text = source.substring(start, current);
-    tokens.add(new Token(type, text, Optional.of(literal), line, column));
+    tokens.add(new Token(type, text, literal, line, column));
   }
 }

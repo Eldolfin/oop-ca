@@ -6,9 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
-public class App {
+class App {
   static boolean hadError = false;
+  static boolean hadRuntimeError = false;
+  private static final Interpreter interpreter = new Interpreter();
 
   public static void main(String[] args) throws IOException {
     if (args.length > 1) {
@@ -24,9 +27,11 @@ public class App {
   private static void runFile(String path) throws IOException {
     byte[] bytes = Files.readAllBytes(Paths.get(path));
     run(new String(bytes, Charset.defaultCharset()));
-    if (hadError) {
+
+    if (hadError)
       System.exit(65);
-    }
+    if (hadRuntimeError)
+      System.exit(70);
   }
 
   private static void runPrompt() throws IOException {
@@ -47,12 +52,29 @@ public class App {
   }
 
   private static void run(String source) {
-    Scanner scanner = new Scanner(source);
-    List<Token> tokens = scanner.scanTokens();
+    var scanner = new Scanner(source);
+    var tokens = scanner.scanTokens();
 
-    for (Token token : tokens) {
-      System.out.println(token);
-    }
+    var parser = new Parser(tokens);
+    var expression = parser.parse();
+
+    if (hadError || expression.isEmpty())
+      return;
+
+    interpreter.interpret(expression.get());
+  }
+
+  static void error(Token token, String message) {
+    if (token.type == TokenType.EOF)
+      report(token.line, " at end", message);
+    else
+      report(token.line, " at'", token.lexeme + "'" + message);
+  }
+
+  static void runtimeError(RuntimeError error) {
+    System.out.println(error.getMessage() +
+        "\n[line " + error.token.line + " column " + error.token.column + "]");
+    hadRuntimeError = true;
   }
 
   static void error(int line, String message) {
