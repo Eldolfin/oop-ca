@@ -8,4 +8,3 @@ public class RuntimeError extends RuntimeException {
     this.token = token;
   }
 }
-

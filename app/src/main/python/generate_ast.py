@@ -2,13 +2,13 @@ import os
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__),
                           '..', 'java/interpreteur/rouille/java/')
-SYNTAX_FILE = os.path.join(os.path.dirname(__file__), 'syntax.rules')
+EXPR_SYNTAX = os.path.join(os.path.dirname(__file__), 'expr.rules')
+STMT_STNTAX = os.path.join(os.path.dirname(__file__), 'stmt.rules')
 
 
 def main():
-    syntax: [str] = open(SYNTAX_FILE).readlines()
-
-    define_ast("Expr", syntax)
+    define_ast("Expr", open(EXPR_SYNTAX).readlines())
+    define_ast("Stmt", open(STMT_STNTAX).readlines())
 
 
 def define_ast(basename: str, types: [str]):
@@ -20,6 +20,7 @@ def define_ast(basename: str, types: [str]):
 package interpreteur.rouille.java;
 
 import java.util.List;
+import java.util.Optional;
 
 abstract class {basename} {{''')
 

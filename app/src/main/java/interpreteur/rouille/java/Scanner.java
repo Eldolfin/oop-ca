@@ -34,6 +34,8 @@ class Scanner {
       scanToken();
     }
 
+    // free semicolon at the end for the repl
+    tokens.add(new Token(SEMICOLON, ";", Optional.empty(), line, column));
     tokens.add(new Token(EOF, "", Optional.empty(), line, column));
     return tokens;
   }
@@ -62,13 +64,18 @@ class Scanner {
     }
 
     if (maxTokenType == null) {
-      if (advance() != ' ') {
-        App.error(line, "Unknown token.");
+      var token = advance();
+      if (!Character.isWhitespace(token)) {
+        App.error(line, "Unknown token `" + token + "`.");
+      } else if (token == '\n') {
+        column = 0;
+        line++;
       }
       return;
     }
 
     current += maxTokenLenght;
+    column += maxTokenLenght;
     switch (maxTokenType) {
       case INTEGER:
         addToken(maxTokenType, Optional.of(Integer.parseInt(maxLexeme)));

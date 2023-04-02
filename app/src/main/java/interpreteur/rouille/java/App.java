@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 class App {
   static boolean hadError = false;
@@ -20,13 +18,15 @@ class App {
     } else if (args.length == 1) {
       runFile(args[0]);
     } else {
+      interpreter.repl_mode = true;
       runPrompt();
     }
   }
 
   private static void runFile(String path) throws IOException {
-    byte[] bytes = Files.readAllBytes(Paths.get(path));
-    run(new String(bytes, Charset.defaultCharset()));
+    var bytes = Files.readAllBytes(Paths.get(path));
+    var program = new String(bytes, Charset.defaultCharset());
+    run(program);
 
     if (hadError)
       System.exit(65);
@@ -56,19 +56,19 @@ class App {
     var tokens = scanner.scanTokens();
 
     var parser = new Parser(tokens);
-    var expression = parser.parse();
+    var statements = parser.parse();
 
-    if (hadError || expression.isEmpty())
+    if (hadError)
       return;
 
-    interpreter.interpret(expression.get());
+    interpreter.interpret(statements);
   }
 
   static void error(Token token, String message) {
     if (token.type == TokenType.EOF)
-      report(token.line, " at end", message);
+      report(token.line, " at end ", message);
     else
-      report(token.line, " at'", token.lexeme + "'" + message);
+      report(token.line, " at `" + token.lexeme + "` ", message);
   }
 
   static void runtimeError(RuntimeError error) {
