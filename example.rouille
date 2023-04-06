@@ -1,6 +1,10 @@
+fonction est_bg(personne: placeholder) -> bool {
+  personne == ("Oscar", "Le Dauphin") 
+}
+
 fonction dis_bonjour(prénom: &Chaine, nom: &Chaine) {
   soit suffixe = 
-    si (prénom, nom) == ("Oscar", "Le Dauphin") {
+    si est_bg((prénom, nom)) {
       "Le BG"
     } sinon {
         "Le Moche"
