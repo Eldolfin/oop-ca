@@ -9,6 +9,10 @@ class Token {
   final int line;
   final int column;
 
+  public Token(String lexeme) {
+    this(TokenType.IDENTIFIER, lexeme, 0, 0);
+  }
+
   public Token(TokenType type, String lexeme, int line, int column) {
     this(type, lexeme, Optional.empty(), line, column);
   }

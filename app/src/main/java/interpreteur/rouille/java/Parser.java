@@ -9,6 +9,13 @@ import static interpreteur.rouille.java.TokenType.*;
 
 class Parser {
   private class ParserError extends RuntimeException {
+    Token token;
+    String message;
+
+    ParserError(Token token, String message) {
+      this.token = token;
+      this.message = message;
+    }
   }
 
   private final List<Token> tokens;
@@ -22,34 +29,36 @@ class Parser {
     var statements = new ArrayList<Stmt>();
     skip_semicolons();
     while (!isAtEnd()) {
-      statements.add(declaration());
+      try {
+        statements.add(declaration());
+      } catch (ParserError e) {
+        App.error(e.token, e.message);
+        synchronize();
+        return null;
+      }
       skip_semicolons();
     }
     return statements;
   }
 
   private Stmt declaration() {
-    try {
-      if (match(FUN)) {
-        return function("fonction");
-      } else if (match(LET)) {
-        return varDeclaration();
-      }
-
-      return statement();
-    } catch (ParserError e) {
-      synchronize();
-      return null;
+    if (match(FUN)) {
+      return function("fonction");
     }
+
+    return statement();
   }
 
   private Stmt function(String kind) {
     var name = consume(IDENTIFIER, "Nom de " + kind + "attendu");
     consume(LEFT_PAREN, "Un `(` est attendu après un nom de " + kind);
     var parameters = new ArrayList<Token>();
+    var types = new ArrayList<Type>();
     if (!check(RIGHT_PAREN)) {
       do {
         parameters.add(consume(IDENTIFIER, "Nom de paramètre attendu"));
+        consume(COLON, "Le type doit être spécifié avec la syntaxe `paramètre: type`");
+        types.add(type());
       } while (match(COMMA));
     }
     consume(RIGHT_PAREN, "Un `)` est attendu après les paramètres de " + kind);
@@ -67,13 +76,26 @@ class Parser {
     return new Stmt.Function(name, parameters, statements);
   }
 
+  private Type type() {
+    var type = new Type();
+    if (match(AMPERSAND)) {
+      type.reference = true;
+    }
+    type.setByName(consume(IDENTIFIER, "Un type doit être spécifié après un `:`"));
+    return type;
+  }
+
   private Stmt varDeclaration() {
     var mutable = match(MUT);
     var name = consume(IDENTIFIER, "Un nom de variable était attendu après un `soit`");
+    Optional<Type> type = Optional.empty();
+    if (match(COLON)) {
+      type = Optional.of(type());
+    }
     consume(EQUAL, "Une variable déclarée doit aussi être initialisée");
     var initializer = expression();
     consume(SEMICOLON, "Un `;` était attendu après la déclaration d'une variable");
-    return new Stmt.Var(name, initializer, mutable);
+    return new Stmt.Var(name, initializer, mutable, type);
   }
 
   private Stmt statement() {
@@ -85,6 +107,8 @@ class Parser {
       return whileStatement();
     else if (match(LOOP))
       return loopStatement();
+    else if (match(LET))
+      return varDeclaration();
     else
       return assignment();
   }
@@ -148,7 +172,7 @@ class Parser {
       }
     }
 
-    if (!(expr instanceof Expr.If) && !(expr instanceof Expr.Block)) {
+    if (!(expr instanceof Expr.If) && !(expr instanceof Expr.Block) && !(expr instanceof Expr.Literal)) {
       consume(SEMICOLON, "Un `;` était attendu après la ligne de code");
     }
 
@@ -270,7 +294,7 @@ class Parser {
   private Expr bitwise() {
     var expr = unary();
 
-    while (match(BITWISE_OR, BITWISE_AND)) {
+    while (match(BITWISE_OR, AMPERSAND)) {
       var operator = previous();
       var right = unary();
       expr = new Expr.Binary(expr, operator, right);
@@ -382,8 +406,7 @@ class Parser {
   }
 
   private ParserError error(Token token, String message) {
-    App.error(token, message);
-    return new ParserError();
+    return new ParserError(token, message);
   }
 
   private boolean match(TokenType... types) {
@@ -424,20 +447,17 @@ class Parser {
     }
   }
 
-  // Returns true if the next statement or expression has
-  // no semicolon ending it. (if it sees a closing bracket before)
+  // Returns true if the next expression has
+  // no semicolon ending it.
   private boolean hasNoSemicolon() {
-    var max = tokens.size();
-    for (int i = current; i < max; i++) {
-      switch (tokens.get(i).type) {
-        case SEMICOLON:
-          return false;
-        case RIGHT_BRACE:
-          return true;
-        default:
-          break;
-      }
+    var before = current;
+    try {
+      expression(); // skip an expression
+    } catch (ParserError e) {
+      // suppress errors here to avoid getting duplicates
     }
-    return true;
+    var result = !match(SEMICOLON) && match(RIGHT_BRACE);
+    current = before;
+    return result;
   }
 }

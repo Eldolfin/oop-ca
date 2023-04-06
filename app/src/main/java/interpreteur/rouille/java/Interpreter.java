@@ -1,7 +1,9 @@
 package interpreteur.rouille.java;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import interpreteur.rouille.java.Expr.Binary;
@@ -24,6 +26,7 @@ public class Interpreter implements
   final Environment globals = new Environment();
   private Environment environment = globals;
   public boolean repl_mode = false;
+  private Map<Object, Integer> locals = new HashMap<>();
 
   Interpreter() {
     Natives.load(globals);
@@ -32,7 +35,14 @@ public class Interpreter implements
   void interpret(List<Stmt> statements) {
     try {
       for (Stmt statement : statements) {
+        // TODO: check that top level statements are only function definition (or
+        // constants?) (only in !repl_mode)
         execute(statement);
+      }
+      // this is a hacky way of executing the main function
+      if (!repl_mode) {
+        var main = new Expr.Call(new Expr.Variable(new Token("principale")), null, new ArrayList<>());
+        evaluate(main);
       }
     } catch (RuntimeError e) {
       App.runtimeError(e);
@@ -65,7 +75,14 @@ public class Interpreter implements
   @Override
   public Void visitAssignStmt(Assign stmt) {
     var value = evaluate(stmt.value);
-    environment.assign(stmt.name, value);
+
+    var distance = locals.get(stmt);
+    if (distance != null) {
+      environment.assignAt(distance, stmt.name, value);
+    } else {
+      globals.assign(stmt.name, value);
+    }
+
     return null;
   }
 
@@ -152,7 +169,7 @@ public class Interpreter implements
 
   @Override
   public Object visitVariableExpr(Variable expr) {
-    return environment.get(expr.name);
+    return lookUpVariable(expr.name, expr);
   }
 
   @Override
@@ -248,7 +265,7 @@ public class Interpreter implements
         return left.equals(right);
       case BANG_EQUAL:
         return !left.equals(right);
-      case BITWISE_AND:
+      case AMPERSAND:
         if (right instanceof Integer && left instanceof Integer)
           return (int) left & (int) right;
         else
@@ -370,6 +387,19 @@ public class Interpreter implements
     }
 
     return result;
+  }
+
+  public void resolve(Object exprOrStmt, int depth) {
+    locals.put(exprOrStmt, depth);
+  }
+
+  private Object lookUpVariable(Token name, Expr expr) {
+    Integer distance = locals.get(expr);
+    if (distance != null) {
+      return environment.getAt(distance, name.lexeme);
+    } else {
+      return globals.get(name);
+    }
   }
 
   private String stringify(Object o) {

@@ -73,10 +73,11 @@ abstract class Stmt {
   }
 
   static class Var extends Stmt {
-    Var(Token name, Expr initializer, boolean mutable) {
+    Var(Token name, Expr initializer, boolean mutable, Optional<Type> type) {
       this.name = name;
       this.initializer = initializer;
       this.mutable = mutable;
+      this.type = type;
     }
 
     @Override
@@ -87,6 +88,7 @@ abstract class Stmt {
     final Token name;
     final Expr initializer;
     final boolean mutable;
+    final Optional<Type> type;
   }
 
   static class Assign extends Stmt {

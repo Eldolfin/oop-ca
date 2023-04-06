@@ -1,0 +1,15 @@
+fonction dis_bonjour(prénom: &Chaine, nom: &Chaine) {
+  soit suffixe = 
+    si (prénom, nom) == ("Oscar", "Le Dauphin") {
+      "Le BG"
+    } sinon {
+        "Le Moche"
+    };
+
+  affiche!("Bonjour " + prénom + " " + nom + " " + suffixe + "!");
+}
+
+fonction principale() {
+  dis_bonjour("Oscar", "Le Dauphin");
+  dis_bonjour("Jean", "Dupont");
+}

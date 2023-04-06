@@ -30,4 +30,23 @@ class Tuple {
     res = res.substring(1, res.length() - 1);
     return "(" + res + ")";
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof Tuple)) {
+      return false;
+    }
+    var otherItems = ((Tuple) obj).items;
+
+    if (items.size() != otherItems.size()) {
+      return false;
+    }
+    for (int i = 0; i < items.size(); i++) {
+      if (!items.get(i).equals(otherItems.get(i))) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }

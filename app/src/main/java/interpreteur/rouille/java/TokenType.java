@@ -6,7 +6,7 @@ enum TokenType {
   COMMA(","), DOT("\\."),
   MINUS("-"), PLUS("\\+"),
   SLASH("/"), STAR("\\*"), PERCENT("%"),
-  SEMICOLON(";"),
+  SEMICOLON(";"), COLON(":"),
   PLUS_EQUAL("\\+="), MINUS_EQUAL("-="), SLASH_EQUAL("/="), STAR_EQUAL("\\*="),
   PERCENT_EQUAL("%="), OR_EQUAL("\\|="), AND_EQUAL("&="),
 
@@ -15,7 +15,7 @@ enum TokenType {
   GREATER(">"), GREATER_EQUAL(">="),
   LESS("<"), LESS_EQUAL("<="),
   AND("&&"), OR("\\|\\|"),
-  BITWISE_AND("&"), BITWISE_OR("\\|"),
+  AMPERSAND("&"), BITWISE_OR("\\|"),
 
   IDENTIFIER("([a-zA-Z]|[à-ü]|[À-Ü]|_)([a-zA-Z]|[à-ü]|[À-Ü]|[0-9]|_)*"),
   STRING("[\"]([^\"\\\n]|\\.|\\\n)*[\"]"),
